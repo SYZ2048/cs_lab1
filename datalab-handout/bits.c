@@ -2,7 +2,8 @@
  * CS:APP Data Lab 
  * 
  * <Please put your name and userid here>
- * 
+ *Yan xinrui 19307130359
+ *
  * bits.c - Source file with your solutions to the Lab.
  *          This is the file you will hand in to your instructor.
  *
@@ -110,6 +111,7 @@ You are expressly forbidden to:
 NOTES:
   1. Use the dlc (data lab checker) compiler (described in the handout) to 
      check the legality of your solutions.
+     check the legality of your solutions.
   2. Each function has a maximum number of operations (integer, logical,
      or comparison) that you are allowed to use for your implementation
      of the function.  The max operator count is checked by dlc.
@@ -142,20 +144,25 @@ NOTES:
  *   Max ops: 14
  *   Rating: 1
  */
-int bitXor(int x, int y) {
-  return 2;
+int bitXor(int x, int y)
+{
+      	return y&(~x);
 }
+
 /* 
  * tmin - return minimum two's complement integer 
  *   Legal ops: ! ~ & ^ | + << >>
  *   Max ops: 4
  *   Rating: 1
  */
-int tmin(void) {
-
-  return 2;
-
+int tmin(void)
+{
+	x=0x1;
+	x<<31;
+  return x;
 }
+
+
 //2
 /*
  * isTmax - returns 1 if x is the maximum, two's complement number,
@@ -165,7 +172,10 @@ int tmin(void) {
  *   Rating: 1
  */
 int isTmax(int x) {
-  return 2;
+	int m,n;
+	m=0x1;
+	n=m<<31;
+  return x;
 }
 /* 
  * allOddBits - return 1 if all odd-numbered bits in word set to 1
@@ -293,4 +303,3 @@ int floatFloat2Int(unsigned uf) {
  */
 unsigned floatPower2(int x) {
     return 2;
-}
