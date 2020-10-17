@@ -112,6 +112,7 @@ NOTES:
   1. Use the dlc (data lab checker) compiler (described in the handout) to 
      check the legality of your solutions.
      check the legality of your solutions.
+     check the legality of your solutions.
   2. Each function has a maximum number of operations (integer, logical,
      or comparison) that you are allowed to use for your implementation
      of the function.  The max operator count is checked by dlc.
@@ -138,7 +139,7 @@ NOTES:
 #endif
 //1
 /* 
- * bitXor - x^y using only ~ and & 
+ *1  bitXor - x^y using only ~ and & 
  *   Example: bitXor(4, 5) = 1
  *   Legal ops: ~ &
  *   Max ops: 14
@@ -150,7 +151,7 @@ int bitXor(int x, int y)
 }
 
 /* 
- * tmin - return minimum two's complement integer 
+ *2  tmin - return minimum two's complement integer 
  *   Legal ops: ! ~ & ^ | + << >>
  *   Max ops: 4
  *   Rating: 1
@@ -165,20 +166,21 @@ int tmin(void)
 
 //2
 /*
- * isTmax - returns 1 if x is the maximum, two's complement number,
+ *3  isTmax - returns 1 if x is the maximum, two's complement number,
  *     and 0 otherwise 
  *   Legal ops: ! ~ & ^ | +
  *   Max ops: 10
  *   Rating: 1
  */
-int isTmax(int x) {
+int isTmax(int x) 
+{
 	int m,n;
 	m=0x1;
 	n=m<<31;
-  return x;
+  return !(x&n)&&(!(~x<<1));
 }
 /* 
- * allOddBits - return 1 if all odd-numbered bits in word set to 1
+ *4  allOddBits - return 1 if all odd-numbered bits in word set to 1
  *   where bits are numbered from 0 (least significant) to 31 (most significant)
  *   Examples allOddBits(0xFFFFFFFD) = 0, allOddBits(0xAAAAAAAA) = 1
  *   Legal ops: ! ~ & ^ | + << >>
@@ -186,21 +188,30 @@ int isTmax(int x) {
  *   Rating: 2
  */
 int allOddBits(int x) {
-  return 2;
+	int m=0xaa;
+	m=m<<8+m;
+	m=m<<8+m;
+	m=m<<8+m;
+		
+	return !(m&x);
 }
+
 /* 
- * negate - return -x 
+ *5  negate - return -x 
  *   Example: negate(1) = -1.
  *   Legal ops: ! ~ & ^ | + << >>
  *   Max ops: 5
  *   Rating: 2
  */
-int negate(int x) {
-  return 2;
+int negate(int x) 
+{
+	x=~x+1;
+  return x;
 }
+
 //3
 /* 
- * isAsciiDigit - return 1 if 0x30 <= x <= 0x39 (ASCII codes for characters '0' to '9')
+ *6  isAsciiDigit - return 1 if 0x30 <= x <= 0x39 (ASCII codes for characters '0' to '9')
  *   Example: isAsciiDigit(0x35) = 1.
  *            isAsciiDigit(0x3a) = 0.
  *            isAsciiDigit(0x05) = 0.
@@ -209,16 +220,20 @@ int negate(int x) {
  *   Rating: 3
  */
 int isAsciiDigit(int x) {
-  return 2;
+	int m=0x30,n=0x39;
+	m=~m+1;
+	n=~n+1;
+  return !((x+m)>>31)&&(x+n)>>31;
 }
 /* 
- * conditional - same as x ? y : z 
+ *7  conditional - same as x ? y : z 
  *   Example: conditional(2,4,5) = 4
  *   Legal ops: ! ~ & ^ | + << >>
  *   Max ops: 16
  *   Rating: 3
  */
 int conditional(int x, int y, int z) {
+
   return 2;
 }
 /* 
@@ -294,12 +309,3 @@ int floatFloat2Int(unsigned uf) {
  *
  *   The unsigned value that is returned should have the identical bit
  *   representation as the single-precision floating-point number 2.0^x.
- *   If the result is too small to be represented as a denorm, return
- *   0. If too large, return +INF.
- * 
- *   Legal ops: Any integer/unsigned operations incl. ||, &&. Also if, while 
- *   Max ops: 30 
- *   Rating: 4
- */
-unsigned floatPower2(int x) {
-    return 2;
