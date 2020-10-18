@@ -286,9 +286,19 @@ int logicalNeg(int x)
  *  Max ops: 90
  *  Rating: 4
  */
-int howManyBits(int x) {
-
-  return 0;
+int howManyBits(int x)
+{
+	//若x是正数，找第一个1，若x是负数，取反后，找第一个1;
+	//依次检索x的前16、8、4、2、1位，每逢全0就移动后位到最前；
+	int x_reverse=x^(x>>31);//若x是正数，x>>31为全0，仍得到x；若x是负数，x>>31为全1，得到~x
+	int bits_16=(!!(x_reverse&(0xff<<24+0xff<<16))<<4;//若x前16位全0，bits_16为0,若x前16位非全0，bits_16=16
+	int bits_8=(!!(x_reverse<<bits_16)&(0xff<<24))<<3;//若x前16位全为0，移动16位，否则不动。其他思路同上
+	int bits_4=(!!(x_reverse<<bits_8)&(0xf<<28))<<2;
+	int bits_2=(!!(x_reverse<<bits_4)&(0xc<<30)<<1;
+	int bits_1=(!!(x_reverse<<bits_2)&(0x1<<31);
+	int bits=bits_16+bits_8+bits_4+bits_2+bits_1;
+	
+  return bits|1;
 }
 //float
 /* 
@@ -331,17 +341,20 @@ int floatFloat2Int(unsigned uf) {
  	unsigned int exp=uf>>23&0xff;
 	unsigned int frac=uf&0x7fffff;
 	int bias=127;
+	unsigned int E=exp-bias;
 	int result;
 	if(exp==0)//非规格数
 		result=frac；
+	if(exp==0xff)//NaN或无穷
+                return 0x80000000u;
+	
 	if(exp!=0&exp!=0xff)//规格数
-	       result=(1+frac)<<(exp-bias);
+	{	if(E>31) return 0x80000000;
+		if(E<0) return 0;
+		else	result=(1+frac)<<(exp-bias);
 
 	if(sign) return ~result+1;
                 else return result;
-
-	if(exp==0xff)//NaN或无穷
-		return 0x80000000u;
 }
 /* 
  *13  floatPower2 - Return bit-level equivalent of the expression 2.0^x
@@ -357,6 +370,8 @@ int floatFloat2Int(unsigned uf) {
  *   Rating: 4
  */
 unsigned floatPower2(int x) {
-    return 2;
+	if(x<0) return 0;//值<=1/2,向偶数舍入得到0
+	if(x>127) return 0x80000000u;//超出exp表达范围
+	else return (x+127)<<23;//f=0,exp=E+bias=x+127
 }
 
