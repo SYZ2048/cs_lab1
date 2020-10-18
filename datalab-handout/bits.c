@@ -113,6 +113,8 @@ NOTES:
      check the legality of your solutions.
      check the legality of your solutions.
      check the legality of your solutions.
+     check the legality of your solutions.
+     check the legality of your solutions.
   2. Each function has a maximum number of operations (integer, logical,
      or comparison) that you are allowed to use for your implementation
      of the function.  The max operator count is checked by dlc.
@@ -147,7 +149,8 @@ NOTES:
  */
 int bitXor(int x, int y)
 {
-      	return y&(~x);
+      	return ~(~(~x&y))&(~(x&~y));//求~x&y得到x为0 y为1的位，x&~y得到x为1，y为0的位，这些位被记为1，其余位为0
+	//分别取反后，其余位为1，异位为0，&操作后进行～操作，得到结果
 }
 
 /* 
@@ -160,7 +163,7 @@ int tmin(void)
 {
 	x=0x1;
 	x<<31;
-  return x;
+  return x;//1，向左位移31位得到Tmin
 }
 
 
@@ -172,12 +175,12 @@ int tmin(void)
  *   Max ops: 10
  *   Rating: 1
  */
-int isTmax(int x) 
+int isTmax(int x) //若x为最大补码，即为0111...111
 {
 	int m,n;
 	m=0x1;
-	n=m<<31;
-  return !(x&n)&&(!(~x<<1));
+	n=m<<31;//n为100...000
+  return !(x&n)&&(!(~x<<1));//先验证符号位为0，再验证后面所有位为0
 }
 /* 
  *4  allOddBits - return 1 if all odd-numbered bits in word set to 1
@@ -188,12 +191,12 @@ int isTmax(int x)
  *   Rating: 2
  */
 int allOddBits(int x) {
-	int m=0xaa;
+	int m=0x55;
 	m=m<<8+m;
 	m=m<<8+m;
-	m=m<<8+m;
+	m=m<<8+m;//使得m=0101...0101
 		
-	return !(m&x);
+	return !(~(m|x));//若x有奇数位为0，则m|x就不全为1，~(m|x)就不为0
 }
 
 /* 
@@ -205,7 +208,7 @@ int allOddBits(int x) {
  */
 int negate(int x) 
 {
-	x=~x+1;
+	x=~x+1;//补码规则
   return x;
 }
 
@@ -221,9 +224,9 @@ int negate(int x)
  */
 int isAsciiDigit(int x) {
 	int m=0x30,n=0x39;
-	m=~m+1;
-	n=~n+1;
-  return !((x+m)>>31)&&(x+n)>>31;
+	m=~m+1;//m=-30
+	n=~n+1;//n=-39
+  return !((x+m)>>31)&&(x+n)>>31;//若x满足，则x-30>=0,且x-39<=0
 }
 /* 
  *7  conditional - same as x ? y : z 
@@ -232,33 +235,46 @@ int isAsciiDigit(int x) {
  *   Max ops: 16
  *   Rating: 3
  */
-int conditional(int x, int y, int z) {
-
-  return 2;
+int conditional(int x, int y, int z) 
+{
+	return (~!!x+1)&y|(~!x+1)&z;//若x=0，~!!x+1=0x0,(~!!x+1)&y=0，进入下一个部分，~!x+1=0xffffffff,输出z
+  				//若x!=0,~!!x+1=0xffffffff,&y后=y，进入下一部分，~!x+1=0
 }
+
 /* 
- * isLessOrEqual - if x <= y  then return 1, else return 0 
+ *8  isLessOrEqual - if x <= y  then return 1, else return 0 
  *   Example: isLessOrEqual(4,5) = 1.
  *   Legal ops: ! ~ & ^ | + << >>
  *   Max ops: 24
  *   Rating: 3
  */
-int isLessOrEqual(int x, int y) {
-  return 2;
+int isLessOrEqual(int x, int y) 
+{
+	x=~x+1;//x=-x;
+	int sign=(x+y)>>31;//y-x's sign
+	//if x<=y,then y-x>=0,sign=0;
+	//else sign=1
+  return !sign;
 }
+
 //4
 /* 
- * logicalNeg - implement the ! operator, using all of 
+ *9  logicalNeg - implement the ! operator, using all of 
  *              the legal operators except !
  *   Examples: logicalNeg(3) = 0, logicalNeg(0) = 1
  *   Legal ops: ~ & ^ | + << >>
  *   Max ops: 12
  *   Rating: 4 
  */
-int logicalNeg(int x) {
-  return 2;
+int logicalNeg(int x) 
+{
+	int neg_x=~x+1;
+	int result=(x|neg_x)>>31;  //only when x=0, -x=-0 sign(x)=sign(-x)=0
+
+  return result^0x1;
 }
-/* howManyBits - return the minimum number of bits required to represent x in
+
+/*10  howManyBits - return the minimum number of bits required to represent x in
  *             two's complement
  *  Examples: howManyBits(12) = 5
  *            howManyBits(298) = 10
@@ -271,25 +287,35 @@ int logicalNeg(int x) {
  *  Rating: 4
  */
 int howManyBits(int x) {
+
   return 0;
 }
 //float
 /* 
- * floatScale2 - Return bit-level equivalent of expression 2*f for
+ *11  floatScale2 - Return bit-level equivalent of expression 2*f for
  *   floating point argument f.
  *   Both the argument and result are passed as unsigned int's, but
- *   they are to be interpreted as the bit-level representation of
- *   single-precision floating point values.
- *   When argument is NaN, return argument
+ *   they are to be interpreted as the bit-level representation of  a
+ *   single-precision floating point value.
+ *   Anything out of range (including NaN and infinity) should return
+ *   0x80000000u.
  *   Legal ops: Any integer/unsigned operations incl. ||, &&. also if, while
  *   Max ops: 30
  *   Rating: 4
  */
 unsigned floatScale2(unsigned uf) {
-  return 2;
+	unsigned int sign=uf&0x8000000;//符号位
+	unsigned int exp=uf&0x7f800000;//阶码
+	unsigned int frac=uf&0x7fffff;//f
+	if(exp==0)//非规格数，把frac乘二
+		frac=frac<<1;
+	else exp=exp+1;//规格数就exp+1
+		if(exp==0x7f800000) return 0x80000000u;//NaN和无穷就输出0x8000000
+	return sign+exp+frac;
 }
+
 /* 
- * floatFloat2Int - Return bit-level equivalent of expression (int) f
+ *12  floatFloat2Int - Return bit-level equivalent of expression (int) f
  *   for floating point argument f.
  *   Argument is passed as unsigned int, but
  *   it is to be interpreted as the bit-level representation of a
@@ -301,11 +327,36 @@ unsigned floatScale2(unsigned uf) {
  *   Rating: 4
  */
 int floatFloat2Int(unsigned uf) {
-  return 2;
+	unsigned int sign=uf>>31;
+ 	unsigned int exp=uf>>23&0xff;
+	unsigned int frac=uf&0x7fffff;
+	int bias=127;
+	int result;
+	if(exp==0)//非规格数
+		result=frac；
+	if(exp!=0&exp!=0xff)//规格数
+	       result=(1+frac)<<(exp-bias);
+
+	if(sign) return ~result+1;
+                else return result;
+
+	if(exp==0xff)//NaN或无穷
+		return 0x80000000u;
 }
 /* 
- * floatPower2 - Return bit-level equivalent of the expression 2.0^x
+ *13  floatPower2 - Return bit-level equivalent of the expression 2.0^x
  *   (2.0 raised to the power x) for any 32-bit integer x.
  *
  *   The unsigned value that is returned should have the identical bit
  *   representation as the single-precision floating-point number 2.0^x.
+ *   If the result is too small to be represented as a denorm, return
+ *   0. If too large, return +INF.
+ * 
+ *   Legal ops: Any integer/unsigned operations incl. ||, &&. Also if, while 
+ *   Max ops: 30 
+ *   Rating: 4
+ */
+unsigned floatPower2(int x) {
+    return 2;
+}
+
