@@ -147,7 +147,7 @@ int bitXor(int x, int y) {
 	//分别取反后，其余位为1，异位为0，&操作后进行～操作，得到结果
 }
 
-
+ 
 /* 
  *2  tmin - return minimum two's complement integer 
  *   Legal ops: ! ~ & ^ | + << >>
@@ -155,9 +155,8 @@ int bitXor(int x, int y) {
  *   Rating: 1
  */
 int tmin(void) {
-	int x=0x1;
-	x<<31;
-	return x;//1，向左位移31位得到Tmin
+	
+	return 0x1<<31;//1，向左位移31位得到Tmin
 
 }
 
@@ -184,7 +183,8 @@ int isTmax(int x) {
  *   Rating: 2
  */
 int allOddBits(int x) {
-	int m=0x55;
+	int m;
+	m=0x55;
 	m=m<<8+m;
 	m=m<<8+m;
 	m=m<<8+m;//使得m=0101...0101
@@ -201,8 +201,8 @@ int allOddBits(int x) {
  *   Rating: 2
  */
 int negate(int x) {
-	x=~x+1;//补码规则
-	return x;
+	//补码规则
+	return ~x+1;
 }
 
 
@@ -217,7 +217,9 @@ int negate(int x) {
  *   Rating: 3
  */
 int isAsciiDigit(int x) {
-	int m=0x30,n=0x39;
+	int m,n;
+	m=0x30;
+	n=0x39;
 	m=~m+1;//m=-30
 	n=~n+1;//n=-39
 	return !((x+m)>>31)&(x+n)>>31;//若x满足，则x-30>=0,且x-39<=0
@@ -245,8 +247,10 @@ int conditional(int x, int y, int z) {
  *   Rating: 3
  */
 int isLessOrEqual(int x, int y) {
+	
+	int sign;
+	sign=(x+y);
 	x=~x+1;//x=-x;
-	int sign=(x+y);
 	sign=sign>>31;//y-x's sign
 	//if x<=y,then y-x>=0,sign=0;
 	//else sign=1
@@ -264,8 +268,10 @@ int isLessOrEqual(int x, int y) {
  *   Rating: 4 
  */
 int logicalNeg(int x) {
-	int neg_x=~x+1;
-	int result=(x|neg_x)>>31;  //only when x=0, -x=-0 sign(x)=sign(-x)=0
+	int neg_x;
+	int result;
+	neg_x=~x+1;
+	result=(x|neg_x)>>31;  //only when x=0, -x=-0 sign(x)=sign(-x)=0
 	return result^0x1;
 }
 
@@ -285,15 +291,15 @@ int logicalNeg(int x) {
 int howManyBits(int x) {
 	//若x是正数，找第一个1，若x是负数，取反后，找第一个1;
 	//依次检索x的前16、8、4、2、1位，每逢全0就移动后位到最前；
-	int x_reverse=x^(x>>31);//若x是正数，x>>31为全0，仍得到x；若x是负数，x>>31为全1，得到~x
-	int bits_16=(!!(x_reverse&(0xff<<24+0xff<<16))<<4;//若x前16位全0，bits_16为0,若x前16位非全0，bits_16=16
-	int bits_8=(!!(x_reverse<<bits_16)&(0xff<<24))<<3;//若x前16位全为0，移动16位，否则不动。其他思路同上
-	int bits_4=(!!(x_reverse<<bits_8)&(0xf<<28))<<2;
-	int bits_2=(!!(x_reverse<<bits_4)&(0xc<<30)<<1;
-	int bits_1=(!!(x_reverse<<bits_2)&(0x1<<31);
-	int bits=bits_16+bits_8+bits_4+bits_2+bits_1+1;
-
-  return bits;
+	int x_reverse,bits_16,bits_8,bits_4,bits_2,bits_2,bits_1;
+	x_reverse=x^(x>>31);//若x是正数，x>>31为全0，仍得到x；若x是负数，x>>31为全1，得到~x
+	bits_16=(!!(x_reverse&(0xff<<24+0xff<<16)))<<4;//若x前16位全0，bits_16为0,若x前16位非全0，bits_16=16
+	bits_8=(!!(x_reverse<<bits_16)&(0xff<<24))<<3;//若x前16位全为0，移动16位，否则不动。其他思路同上
+	bits_4=(!!(x_reverse<<bits_8)&(0xf<<28))<<2;
+	bits_2=(!!(x_reverse<<bits_4)&(0xc<<30))<<1;
+	bits_1=(!!(x_reverse<<bits_2)&(0x1<<31));
+	bits=bits_16+bits_8+bits_4+bits_2+bits_1+1;
+	return bits;
 }
 
 
@@ -310,9 +316,13 @@ int howManyBits(int x) {
  *   Rating: 4
  */
 unsigned floatScale2(unsigned uf) {
- 	unsigned int sign=uf&0x8000000;//符号位
-	unsigned int exp=uf&0x7f800000;//阶码
-	unsigned int frac=uf&0x7fffff;//f
+ 	unsigned int sign;
+	unsigned int exp;
+	unsigned int frac;
+        sign=uf&0x8000000;//符号位
+        exp=uf&0x7f800000;//阶码
+        frac=uf&0x7fffff;//f
+
 	if(exp==0)//非规格数，把frac乘二
 		frac=frac<<1;
 	else exp=exp+1;//规格数就exp+1
@@ -334,14 +344,21 @@ unsigned floatScale2(unsigned uf) {
  *   Rating: 4
  */
 int floatFloat2Int(unsigned uf) {
-	unsigned int sign=uf>>31;
- 	unsigned int exp=uf>>23&0xff;
-	unsigned int frac=uf&0x7fffff;
-	int bias=127;
-	unsigned int E=exp-bias;
+	unsigned int sign;
+ 	unsigned int exp;
+	unsigned int frac;
+	int bias;
+	unsigned int E;
 	int result;
+        sign=uf>>31;
+        exp=uf>>23&0xff;
+        frac=uf&0x7fffff;
+        bias=127;
+        E=exp-bias;
+        
+
 	if(exp==0)//非规格数
-		result=frac；
+		result=frac;
 	if(exp==0xff)//NaN或无穷
                 return 0x80000000u;
 
@@ -373,3 +390,4 @@ unsigned floatPower2(int x) {
 	if(x>127) return 0x80000000u;//超出exp表达范围
 	else return (x+127)<<23;//f=0,exp=E+bias=x+127
 }
+
