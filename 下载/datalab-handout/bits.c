@@ -143,8 +143,8 @@ NOTES:
  *   Rating: 1
  */
 int bitXor(int x, int y) {
-  return ~(~(~x&y))&(~(x&~y));//求~x&y得到x为0 y为1的位，x&~y得到x为1，y为0的位，这些位被记为1，其余位为0
-	//分别取反后，其余位为1，异位为0，&操作后进行～操作，得到结果
+  return ~(x&y)&(~(~x&~y));//求x&y得到x为1 y为1的位，~x&~y得到x为0，y为0的位，这些位被记为1，其余位为0
+	//分别取反后，其余位为1，同位为0，&操作后进行～操作，得到结果
 }
 
  
@@ -170,7 +170,8 @@ int tmin(void) {
  *   Rating: 1
  */
 int isTmax(int x) {
-	return (!!x)&!(~(x+1)^x);//若x=0，！！x=0，返回0；若x！=0且x=0111...111，则x+1==~x
+	return (!!x)&(!((~(x+1))^x))&!!(x+1);//若x=0，！！x=0，返回0；
+					//若x！=0,x=0111...111 or 0xffffffff，则x+1==~x
 }
 
 
@@ -184,12 +185,14 @@ int isTmax(int x) {
  */
 int allOddBits(int x) {
 	int m;
-	m=0x55;
-	m=m<<8+m;
-	m=m<<8+m;
-	m=m<<8+m;//使得m=0101...0101
-		
+	//初始方法：
+	m=(0x55<<24)+(0x55<<16)+(0x55<<8)+0x55;
 	return !(~(m|x));//若x有奇数位为0，则m|x就不全为1，~(m|x)就不为0
+
+	// 初始方法报错后的备用方法
+        //m=0xaa<<8+0xaa<<16+0xaa<<24+0xaa;//使得m=1010101010...10
+        //return !((m&x)^m);
+
 }
 
 
@@ -219,10 +222,10 @@ int negate(int x) {
 int isAsciiDigit(int x) {
 	int m,n;
 	m=0x30;
-	n=0x39;
+	n=0x3a;
 	m=~m+1;//m=-30
-	n=~n+1;//n=-39
-	return !((x+m)>>31)&(x+n)>>31;//若x满足，则x-30>=0,且x-39<=0
+	n=~n+1;//n=-3a
+	return !((x+m)>>31)&((x+n)>>31);//若x满足，则x-0x29>=0,且x-0x3a<0
 }
 
 
@@ -248,14 +251,17 @@ int conditional(int x, int y, int z) {
  */
 int isLessOrEqual(int x, int y) {
 	
-	int sign;
-	sign=(x+y);
-	x=~x+1;//x=-x;
-	sign=sign>>31;//y-x's sign
+	int sign_xy,sign_x,sign_y,sign_ySubx,neg_x;//sign_xy 表示y-x的符号，但x=Tmin时失效
+	sign_x=x>>31;
+	neg_x=~x+1;//x=-x;
+	sign_y=y>>31;
+	sign_ySubx=(neg_x+y)>>31;//y-x's sign
+	sign_xy=!(sign_x^sign_y);//符号相同是1，不同是0
 	//if x<=y,then y-x>=0,sign=0;
 	//else sign=1
-	return !(sign);
+	return ((!!sign_x)&!(x<<1))|(sign_xy&!sign_ySubx)|(!sign_xy&(!!sign_x));
 }
+
 
 
 //4
@@ -272,7 +278,7 @@ int logicalNeg(int x) {
 	int result;
 	neg_x=~x+1;
 	result=(x|neg_x)>>31;  //only when x=0, -x=-0 sign(x)=sign(-x)=0
-	return result^0x1;
+	return (!!result)^0x1;
 }
 
 
@@ -290,15 +296,25 @@ int logicalNeg(int x) {
  */
 int howManyBits(int x) {
 	//若x是正数，找第一个1，若x是负数，取反后，找第一个1;
+	
 	//依次检索x的前16、8、4、2、1位，每逢全0就移动后位到最前；
-	int x_reverse,bits_16,bits_8,bits_4,bits_2,bits_2,bits_1;
+	int  x_reverse,bits_16,bits_8,bits_4,bits_2,bits_1,bits_0,bits;
+
 	x_reverse=x^(x>>31);//若x是正数，x>>31为全0，仍得到x；若x是负数，x>>31为全1，得到~x
-	bits_16=(!!(x_reverse&(0xff<<24+0xff<<16)))<<4;//若x前16位全0，bits_16为0,若x前16位非全0，bits_16=16
-	bits_8=(!!(x_reverse<<bits_16)&(0xff<<24))<<3;//若x前16位全为0，移动16位，否则不动。其他思路同上
-	bits_4=(!!(x_reverse<<bits_8)&(0xf<<28))<<2;
-	bits_2=(!!(x_reverse<<bits_4)&(0xc<<30))<<1;
-	bits_1=(!!(x_reverse<<bits_2)&(0x1<<31));
-	bits=bits_16+bits_8+bits_4+bits_2+bits_1+1;
+	
+	bits_16=(!!(x_reverse>>16))<<4;//若x前16位全0，bits_16为0,若x前16位非全0，bits_16=16
+	x_reverse=x_reverse>>bits_16;
+	bits_8=(!!((x_reverse)>>8))<<3;//若x前16位全为0，移动16位，否则不动。其他思路同上
+	x_reverse=x_reverse>>bits_8;
+	bits_4=(!!((x_reverse)>>4))<<2;
+	x_reverse=x_reverse>>bits_4;
+	bits_2=(!!((x_reverse)>>2))<<1;
+	x_reverse=x_reverse>>bits_2;
+	bits_1=(!!((x_reverse)>>1));
+	x_reverse=x_reverse>>bits_1;
+	bits_0=(!!(x_reverse));
+	bits=bits_16+bits_8+bits_4+bits_2+bits_1+bits_0+1;
+	
 	return bits;
 }
 
@@ -319,14 +335,13 @@ unsigned floatScale2(unsigned uf) {
  	unsigned int sign;
 	unsigned int exp;
 	unsigned int frac;
-        sign=uf&0x8000000;//符号位
+        sign=uf&0x80000000;//符号位
         exp=uf&0x7f800000;//阶码
         frac=uf&0x7fffff;//f
-
+        if(exp==0x7f800000) return sign+exp+frac;//NaN和无穷就输出
 	if(exp==0)//非规格数，把frac乘二
 		frac=frac<<1;
-	else exp=exp+1;//规格数就exp+1
-		if(exp==0x7f800000) return 0x80000000u;//NaN和无穷就输出0x8000000
+	else exp=exp+(0x1<<23);//规格数就exp+1
 	return sign+exp+frac;
 }
 
@@ -345,27 +360,29 @@ unsigned floatScale2(unsigned uf) {
  */
 int floatFloat2Int(unsigned uf) {
 	unsigned int sign;
- 	unsigned int exp;
+ 	int exp;
 	unsigned int frac;
 	int bias;
-	unsigned int E;
+	int E;
 	int result;
         sign=uf>>31;
         exp=uf>>23&0xff;
-        frac=uf&0x7fffff;
+        frac=(uf&0x7fffff)|(0x1<<23);
         bias=127;
         E=exp-bias;
+
         
 
 	if(exp==0)//非规格数
-		result=frac;
+		return 0;
 	if(exp==0xff)//NaN或无穷
                 return 0x80000000u;
 
 	if(exp!=0&exp!=0xff)//规格数
 	{	if(E>31) return 0x80000000;
 		if(E<0) return 0;
-		else	result=(1+frac)<<(exp-bias);
+		if(E<=23&&E>=0)  result=frac>>(23-E);
+		if(E>23&&E<=31)  result=frac<<(E-23);
 	}
 	if(sign) return ~result+1;
                 else return result;
@@ -386,8 +403,12 @@ int floatFloat2Int(unsigned uf) {
  *   Rating: 4
  */
 unsigned floatPower2(int x) {
-	if(x<0) return 0;//值<=1/2,向偶数舍入得到0
-	if(x>127) return 0x80000000u;//超出exp表达范围
-	else return (x+127)<<23;//f=0,exp=E+bias=x+127
+	int exp;
+	int INF;
+	INF=0xff<<23;//infinite number
+	exp=x+127;
+	if(exp<0) return 0;//值<=1/2,向偶数舍入得到0
+	if(exp>255) return INF;//超出exp表达范围
+	else return exp<<23; //f=0,exp=E+bias=x+127
 }
 
